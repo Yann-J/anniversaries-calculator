@@ -42,7 +42,8 @@
     const ONE_YEAR = Duration.fromObject({ years: 1});
     const START_DATE = DateTime.fromISO('0000-01-01');
     const END_DATE = DateTime.fromISO('2999-12-31');
-    const MAX_ANNIVERSARIES = 2;
+    const MAX_PAST_ANNIVERSARIES   = 1;
+    const MAX_FUTURE_ANNIVERSARIES = 3;
     const NOW = DateTime.now();
 
     // Helpers
@@ -73,15 +74,15 @@
     function significantDatesForUnit(date, unit) {
       const significantDuration = significantDurationForUnit(unit);
       const currentAgeInUnit = NOW.diff(date).as(unit);
-      const currentAgeFloor = Math.floor(currentAgeInUnit / significantDuration);
+      const currentAgeBracket = Math.floor(currentAgeInUnit / significantDuration);
 
       let results = {
         past: [],
         future: [],
       };
 
-      for(let i = MAX_ANNIVERSARIES-1; i>=0; i--) {
-        let milestone = (currentAgeFloor - i) * significantDuration;
+      for(let i = MAX_PAST_ANNIVERSARIES-1; i>=0; i--) {
+        let milestone = (currentAgeBracket - i) * significantDuration;
         // Only show positive ages
         if(milestone >= 0) {
           results.past.push({
@@ -91,8 +92,8 @@
         }
       }
 
-      for (let i = 1; i <= MAX_ANNIVERSARIES; i++) {
-        let milestone = (currentAgeFloor + i) * significantDuration;
+      for (let i = 1; i <= MAX_FUTURE_ANNIVERSARIES; i++) {
+        let milestone = (currentAgeBracket + i) * significantDuration;
         results.future.push({
           name: `${formatNumber(milestone)} ${unit}`,
           value: date.plus({[unit]: milestone}),
