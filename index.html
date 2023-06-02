@@ -55,7 +55,7 @@
           <h5>${anniversary.name}</h5>
           <ul>
             <li>${anniversary.value.toLocaleString(DateTime.DATE_MED)}</li>
-            <li>${isFuture ? 'in ' : ''}${formatNumber(Math.abs(anniversary.value.diff(NOW).as('days')))} days${isFuture ? '' : ' ago'}</li>
+            <li>${isFuture ? 'In ' : ''}${formatNumber(Math.abs(anniversary.value.diff(NOW).as('days')))} days${isFuture ? '' : ' ago'}</li>
           </ul>
         </div>
       `;
@@ -143,8 +143,8 @@
 
           container.append(`
             <div class="col-md-12">
-              <h2>${unit}</h2>
-              <h4>Current age: ${formatNumber(NOW.diff(date).as(unit))}</h4>
+              <h2 style="display: inline-block">${unit}</h2>
+              <h5 style="display: inline-block">(current age: ${formatNumber(NOW.diff(date).as(unit))})</h5>
             </div>
             ${anniversaryList}
           `);

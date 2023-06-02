@@ -13,3 +13,7 @@
 h2 {
   color: firebrick;
 }
+
+h2::first-letter {
+  text-transform: capitalize;
+}
