@@ -14,7 +14,7 @@
   <div class="container">
     <h1>Anniversary Calculator</h1>
     <p>This tool will compute various significant anniversaries in some unusual time units, e.g. months or hours...</p>
-    <p>See the <a href="https://github.com/Yann-J/anniversaries-calculator">source code</a> and REAMDE for more details about how this works.</p>
+    <p>See the <a href="https://github.com/Yann-J/anniversaries-calculator">source code</a> and README for more details about how this works.</p>
     <form class="m-2">
       <div class="form-row align-items-center">
         <input type="date" id="date" />
@@ -46,10 +46,6 @@
     const NOW = DateTime.now();
 
     // Helpers
-    function mod(a, n) {
-      // See https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Remainder
-      return ((a % n) + n) % n;
-    }
     function formatNumber(n) {
       return new Intl.NumberFormat('en-US', { maximumFractionDigits: 1}).format(n);
     }
@@ -59,7 +55,7 @@
     function significantDurationForUnit(unit) {
       // return the power of 10 that is closest to 1 year for that unit
       const durationInUnit = ONE_YEAR.as(unit);
-      // Compute lower/upper powers of 10
+      // Compute corresponding upper power of 10
       return 10**(Math.ceil(Math.log10(durationInUnit)));
     }
 
@@ -72,10 +68,13 @@
 
       for(let i = MAX_ANNIVERSARIES-1; i>=0; i--) {
         let milestone = (currentAgeFloor - i) * significantDuration;
-        results.push({
-          name: `${formatNumber(milestone)} ${unit}`,
-          value: date.plus({[unit]: milestone}),
-        });
+        // Only show positive ages
+        if(milestone >= 0) {
+          results.push({
+            name: `${formatNumber(milestone)} ${unit}`,
+            value: date.plus({[unit]: milestone}),
+          });
+        }
       }
 
       for (let i = 1; i <= MAX_ANNIVERSARIES; i++) {
@@ -89,7 +88,6 @@
       return results;
     }
 
-    // init date picker
     $(function () {
       let selectedDate;
       if (location.hash) {
@@ -102,11 +100,11 @@
       $('#date').val(selectedDate.toISODate());
       $('#today').click(function () {
         $('#date').val(DateTime.now().toISODate());
-        compute();
+        compute(); //for some reason setting the value this way won't trigger a change() event
       });
       $('#random').click(function () {
         $('#date').val(DateTime.fromSeconds(START_DATE.toUnixInteger() + Math.random() * (END_DATE.toUnixInteger() - START_DATE.toUnixInteger())).toISODate());
-        compute();
+        compute(); //for some reason setting the value this way won't trigger a change() event
       });
 
       function compute() {
@@ -116,7 +114,7 @@
         // Update URL
         location.hash = date.toISODate('YYYY-MM-DD');
 
-        // Refresh display
+        // Refresh results section
         const container = $('#results');
         container.html('');
         SUPPORTED_UNITS.forEach(unit => {
