@@ -49,6 +49,17 @@
     function formatNumber(n) {
       return new Intl.NumberFormat('en-US', { maximumFractionDigits: 1}).format(n);
     }
+    function formatResult(anniversary, isFuture) {
+      return `
+        <div class="col-md-3 ${isFuture ? 'results-future' : 'results-past'}">
+          <h5>${anniversary.name}</h5>
+          <ul>
+            <li>${anniversary.value.toLocaleString(DateTime.DATE_MED)}</li>
+            <li>${isFuture ? 'in ' : ''}${formatNumber(Math.abs(anniversary.value.diff(NOW).as('days')))} days${isFuture ? '' : ' ago'}</li>
+          </ul>
+        </div>
+      `;
+    }
 
 
     // Core logic
@@ -64,13 +75,16 @@
       const currentAgeInUnit = NOW.diff(date).as(unit);
       const currentAgeFloor = Math.floor(currentAgeInUnit / significantDuration);
 
-      let results = [];
+      let results = {
+        past: [],
+        future: [],
+      };
 
       for(let i = MAX_ANNIVERSARIES-1; i>=0; i--) {
         let milestone = (currentAgeFloor - i) * significantDuration;
         // Only show positive ages
         if(milestone >= 0) {
-          results.push({
+          results.past.push({
             name: `${formatNumber(milestone)} ${unit}`,
             value: date.plus({[unit]: milestone}),
           });
@@ -79,7 +93,7 @@
 
       for (let i = 1; i <= MAX_ANNIVERSARIES; i++) {
         let milestone = (currentAgeFloor + i) * significantDuration;
-        results.push({
+        results.future.push({
           name: `${formatNumber(milestone)} ${unit}`,
           value: date.plus({[unit]: milestone}),
         });
@@ -120,16 +134,11 @@
         SUPPORTED_UNITS.forEach(unit => {
           const anniversaries = significantDatesForUnit(date, unit);
           let anniversaryList = '';
-          anniversaries.forEach(anniversary => {
-            anniversaryList += `
-              <div class="col-md-3 results">
-                <h5>${anniversary.name}</h5>
-                <ul>
-                  <li>${anniversary.value.toLocaleString(DateTime.DATE_MED)}</li>
-                  <li>in ${formatNumber(anniversary.value.diff(NOW).as('days'))} days</li>
-                </ul>
-              </div>
-            `
+          anniversaries.past.forEach(anniversary => {
+            anniversaryList += formatResult(anniversary, false);
+          });
+          anniversaries.future.forEach(anniversary => {
+            anniversaryList += formatResult(anniversary, true);
           });
 
           container.append(`

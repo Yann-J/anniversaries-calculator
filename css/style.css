@@ -1,4 +1,8 @@
-.results {
+.results-past {
+  color: gray;
+}
+
+.results-future {
   color: green;
 }
 
