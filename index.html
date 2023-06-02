@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+
+<head>
+  <title>Anniversaries Calculator</title>
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"
+    integrity="sha384-JcKb8q3iqJ61gNV9KGb8thSsNjpSL0n8PARn9HuZOnIxN0hoP+VmmDGMN5t9UJ0Z" crossorigin="anonymous">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="icon" href="favicon.svg">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+
+<body>
+  <div class="container">
+    <h1>Anniversary Calculator</h1>
+    <p>This tool will compute various significant anniversaries in some unusual time units, e.g. months or hours...</p>
+    <form class="m-2">
+      <div class="form-row align-items-center">
+        <input type="date" id="date" />
+        <span>&nbsp;</span>
+        <div class="btn-group" role="group">
+          <button type="button" id="today" class="btn btn-sm btn-warning" title="Today">Today</button>
+          <button type="button" id="random" class="btn btn-sm btn-warning" title="Random">Random</button>
+        </div>
+      </div>
+    </form>
+
+    <div class="row" id="results"></div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"
+    integrity="sha512-894YE6QWD5I59HgZOGReFYm4dnWc1Qt5NtvYSaNcOP+u1T9qYdvdihz0PPSiiqn/+/3e7Jo4EaG7TubfWGUrMQ=="
+    crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <script src="https://cdn.jsdelivr.net/npm/luxon@3.3.0/build/global/luxon.min.js"></script>
+  <script>
+    const DateTime = luxon.DateTime;
+    const Duration = luxon.Duration;
+
+    // constants
+    const SUPPORTED_UNITS = ['months', 'weeks', 'hours', 'minutes', 'seconds'];
+    const ONE_YEAR = Duration.fromObject({ years: 1});
+    const START_DATE = DateTime.fromISO('0000-01-01');
+    const END_DATE = DateTime.fromISO('2999-12-31');
+    const MAX_ANNIVERSARIES = 2;
+    const NOW = DateTime.now();
+
+    // Helpers
+    function mod(a, n) {
+      // See https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Remainder
+      return ((a % n) + n) % n;
+    }
+    function formatNumber(n) {
+      return new Intl.NumberFormat('en-US', { maximumFractionDigits: 1}).format(n);
+    }
+
+
+    // Core logic
+    function significantDurationForUnit(unit) {
+      // return the power of 10 that is closest to 1 year for that unit
+      const durationInUnit = ONE_YEAR.as(unit);
+      // Compute lower/upper powers of 10
+      return 10**(Math.ceil(Math.log10(durationInUnit)));
+    }
+
+    function significantDatesForUnit(date, unit) {
+      const significantDuration = significantDurationForUnit(unit);
+      const currentAgeInUnit = NOW.diff(date).as(unit);
+      const currentAgeFloor = Math.floor(currentAgeInUnit / significantDuration);
+
+      let results = [];
+
+      for(let i = MAX_ANNIVERSARIES-1; i>=0; i--) {
+        let milestone = (currentAgeFloor - i) * significantDuration;
+        results.push({
+          name: `${formatNumber(milestone)} ${unit}`,
+          value: date.plus({[unit]: milestone}),
+        });
+      }
+
+      for (let i = 1; i <= MAX_ANNIVERSARIES; i++) {
+        let milestone = (currentAgeFloor + i) * significantDuration;
+        results.push({
+          name: `${formatNumber(milestone)} ${unit}`,
+          value: date.plus({[unit]: milestone}),
+        });
+      }
+
+      return results;
+    }
+
+    // init date picker
+    $(function () {
+      let selectedDate;
+      if (location.hash) {
+        selectedDate = DateTime.fromISO(location.hash.substr(1));
+      }
+      if(!(selectedDate && selectedDate.isValid)) {
+        selectedDate = DateTime.now();
+      }
+
+      $('#date').val(selectedDate.toISODate());
+      $('#today').click(function () {
+        $('#date').val(DateTime.now().toISODate());
+        compute();
+      });
+      $('#random').click(function () {
+        $('#date').val(DateTime.fromSeconds(START_DATE.toUnixInteger() + Math.random() * (END_DATE.toUnixInteger() - START_DATE.toUnixInteger())).toISODate());
+        compute();
+      });
+
+      function compute() {
+        // Get selected date
+        const date = DateTime.fromISO($('#date').val());
+
+        // Update URL
+        location.hash = date.toISODate('YYYY-MM-DD');
+
+        // Refresh display
+        const container = $('#results');
+        container.html('');
+        SUPPORTED_UNITS.forEach(unit => {
+          const anniversaries = significantDatesForUnit(date, unit);
+          let anniversaryList = '';
+          anniversaries.forEach(anniversary => {
+            anniversaryList += `
+              <div class="col-md-3 results">
+                <h5>${anniversary.name}</h5>
+                <ul>
+                  <li>${anniversary.value.toLocaleString(DateTime.DATE_MED)}</li>
+                  <li>in ${formatNumber(anniversary.value.diff(NOW).as('days'))} days</li>
+                </ul>
+              </div>
+            `
+          });
+
+          container.append(`
+            <div class="col-md-12">
+              <h2>${unit}</h2>
+              <h4>Current age: ${formatNumber(NOW.diff(date).as(unit))}</h4>
+            </div>
+            ${anniversaryList}
+          `);
+        });
+      }
+
+      // Run on first load
+      compute();
+      // Run on selections
+      $('#date').change(compute);
+    });
+  </script>
+</body>

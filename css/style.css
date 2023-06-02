@@ -1,0 +1,11 @@
+.results {
+  color: green;
+}
+
+.invalid {
+  background-color: red;
+}
+
+h2 {
+  color: firebrick;
+}
