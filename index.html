@@ -46,9 +46,11 @@
     const MAX_FUTURE_ANNIVERSARIES = 3;
     const NOW = DateTime.now();
 
+    const numberFormatter = new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 });
+
     // Helpers
     function formatNumber(n) {
-      return new Intl.NumberFormat('en-US', { maximumFractionDigits: 1}).format(n);
+      return numberFormatter.format(n);
     }
     function formatResult(anniversary, isFuture) {
       return `
