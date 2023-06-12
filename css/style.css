@@ -6,6 +6,10 @@
   color: green;
 }
 
+.results-major {
+  color: darkorange;
+}
+
 .invalid {
   background-color: red;
 }

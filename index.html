@@ -44,6 +44,7 @@
     const END_DATE = DateTime.fromISO('2999-12-31');
     const MAX_PAST_ANNIVERSARIES   = 1;
     const MAX_FUTURE_ANNIVERSARIES = 3;
+    const MAJOR_BIRTHDAY_MULTIPLIER = 5;
     const NOW = DateTime.now();
 
     const numberFormatter = new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 });
@@ -52,13 +53,13 @@
     function formatNumber(n) {
       return numberFormatter.format(n);
     }
-    function formatResult(anniversary, isFuture) {
+    function formatResult(anniversary) {
       return `
-        <div class="col-md-3 ${isFuture ? 'results-future' : 'results-past'}">
+        <div class="col-md-3 results-${anniversary.style}">
           <h5>${anniversary.name}</h5>
           <ul>
             <li>${anniversary.value.toLocaleString(DateTime.DATE_MED)}</li>
-            <li>${isFuture ? 'In ' : ''}${formatNumber(Math.abs(anniversary.value.diff(NOW).as('days')))} days${isFuture ? '' : ' ago'}</li>
+            <li>${anniversary.style == 'past' ? '' : 'In '}${formatNumber(Math.abs(anniversary.value.diff(NOW).as('days')))} days${anniversary.style == 'past' ? ' ago' : ''}</li>
           </ul>
         </div>
       `;
@@ -78,27 +79,26 @@
       const currentAgeInUnit = NOW.diff(date).as(unit);
       const currentAgeBracket = Math.floor(currentAgeInUnit / significantDuration);
 
-      let results = {
-        past: [],
-        future: [],
-      };
+      let results = [];
 
       for(let i = MAX_PAST_ANNIVERSARIES-1; i>=0; i--) {
         let milestone = (currentAgeBracket - i) * significantDuration;
         // Only show positive ages
         if(milestone >= 0) {
-          results.past.push({
+          results.push({
             name: `${formatNumber(milestone)} ${unit}`,
             value: date.plus({[unit]: milestone}),
+            style: 'past',
           });
         }
       }
 
       for (let i = 1; i <= MAX_FUTURE_ANNIVERSARIES; i++) {
         let milestone = (currentAgeBracket + i) * significantDuration;
-        results.future.push({
+        results.push({
           name: `${formatNumber(milestone)} ${unit}`,
           value: date.plus({[unit]: milestone}),
+          style: (currentAgeBracket + i) % 5 ? 'future' : 'major',
         });
       }
 
@@ -137,11 +137,8 @@
         SUPPORTED_UNITS.forEach(unit => {
           const anniversaries = significantDatesForUnit(date, unit);
           let anniversaryList = '';
-          anniversaries.past.forEach(anniversary => {
-            anniversaryList += formatResult(anniversary, false);
-          });
-          anniversaries.future.forEach(anniversary => {
-            anniversaryList += formatResult(anniversary, true);
+          anniversaries.forEach(anniversary => {
+            anniversaryList += formatResult(anniversary);
           });
 
           container.append(`
